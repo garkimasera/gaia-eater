@@ -1,0 +1,14 @@
+{
+    ocean: (
+        z: 90.0
+    ),
+    mountains: (
+        z: 95.0,
+    ),
+    desert: (
+        z: 50.0,
+    ),
+    grassland: (
+        z: 40.0,
+    ),
+}

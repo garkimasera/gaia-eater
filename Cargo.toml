@@ -1,0 +1,27 @@
+[package]
+name = "gaia-eater"
+version = "0.1.0"
+edition = "2021"
+authors = ["T. Okubo <t.okubo.rx78+devel@gmail.com>"]
+
+[features]
+inspector = ["bevy-inspector-egui"]
+
+[dependencies]
+anyhow = "1"
+arrayvec = "0.7"
+bevy = "0.7"
+bevy_egui = "0.14"
+bevy_asset_ron = "0.4"
+bevy-inspector-egui = { version = "0.11", optional = true }
+bincode = "1"
+clap = { version = "3", features = ["derive"] }
+fnv = "1"
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+strum = { version = "0.24", features = ["derive"] }
+
+tile-geom = { git = "https://github.com/garkimasera/tile-geom.git" }
+
+[profile.dev]
+opt-level = 0
