@@ -1,0 +1,10 @@
+{
+    // UI
+    "build": "Build",
+    "coordinates": "Coordinates",
+    "energy": "Energy",
+    "material": "Material",
+    
+    // Structures
+    "branch": "Branch",
+}

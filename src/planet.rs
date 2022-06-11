@@ -10,7 +10,7 @@ pub struct Tile {
     pub biomass: f32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Player {
     pub energy: f32,
     pub material: f32,
@@ -30,6 +30,7 @@ impl Default for Tile {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Planet {
     pub tick: u64,
+    pub player: Player,
     pub map: Array2d<Tile>,
 }
 
@@ -37,6 +38,10 @@ impl Planet {
     pub fn new(w: u32, h: u32) -> Planet {
         let map = Array2d::new(w, h, Tile::default());
 
-        Planet { tick: 0, map }
+        Planet {
+            tick: 0,
+            player: Player::default(),
+            map,
+        }
     }
 }

@@ -4,6 +4,9 @@ extern crate tile_geom as geom;
 
 use clap::Parser;
 
+#[macro_use]
+mod text;
+
 mod action;
 mod assets;
 mod defs;
@@ -29,6 +32,7 @@ fn main() {
     App::new()
         .insert_resource(DefaultTaskPoolOptions::with_num_threads(2))
         .add_plugins(DefaultPlugins)
+        .add_plugin(text::TextPlugin)
         .add_plugin(assets::AssetsPlugin)
         .add_plugin(screen::ScreenPlugin)
         .add_plugin(ui::UiPlugin {

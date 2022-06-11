@@ -1595,6 +1595,7 @@ dependencies = [
  "clap",
  "fnv",
  "log",
+ "once_cell",
  "serde",
  "strum",
  "tile-geom",

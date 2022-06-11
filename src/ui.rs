@@ -9,12 +9,12 @@ use bevy_egui::{
 };
 use std::collections::HashMap;
 
-use crate::defs::StructureKind;
 use crate::sim::ManagePlanet;
 use crate::{
     defs::Biome,
     screen::{CursorMode, HoverTile, OccupiedScreenSpace},
 };
+use crate::{defs::StructureKind, planet::Planet};
 
 #[derive(Clone, Copy, Debug)]
 pub struct UiPlugin {
@@ -137,6 +137,7 @@ fn panels(
     hover_tile: Query<&HoverTile>,
     mut cursor_mode: ResMut<CursorMode>,
     mut wos: ResMut<WindowsOpenState>,
+    planet: Res<Planet>,
     textures: Res<UiTextures>,
     conf: Res<UiConf>,
 ) {
@@ -145,14 +146,15 @@ fn panels(
     occupied_screen_space.occupied_left = egui::SidePanel::left("left_panel")
         .resizable(true)
         .show(egui_ctx.ctx_mut(), |ui| {
-            ui.label("吾輩は猫である");
+            ui.label(&format!("{}: {}", t!("energy"), planet.player.energy));
+            ui.label(&format!("{}: {}", t!("material"), planet.player.material));
 
             let s = if let Some(coords) = hover_tile.get_single().unwrap().0 {
                 format!("[{}, {}]", coords.0, coords.1)
             } else {
                 "-".into()
             };
-            ui.label(format!("Coordinates: {}", s));
+            ui.label(format!("{}: {}", t!("coordinates"), s));
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
         .response
@@ -183,7 +185,10 @@ fn toolbar(
 ) {
     if let Some((handle, size)) = textures.0.get("ui/icon-branch.png") {
         if ui
-            .add(egui::Button::image_and_text(handle.id(), conf.tex_size(*size), "branch").small())
+            .add(
+                egui::Button::image_and_text(handle.id(), conf.tex_size(*size), t!("branch"))
+                    .small(),
+            )
             .clicked()
         {
             *cursor_mode = CursorMode::Build(StructureKind::Branch);
@@ -191,7 +196,10 @@ fn toolbar(
     }
     if let Some((handle, size)) = textures.0.get("ui/icon-build.png") {
         if ui
-            .add(egui::Button::image_and_text(handle.id(), conf.tex_size(*size), "build").small())
+            .add(
+                egui::Button::image_and_text(handle.id(), conf.tex_size(*size), t!("build"))
+                    .small(),
+            )
             .clicked()
         {
             wos.build = true;

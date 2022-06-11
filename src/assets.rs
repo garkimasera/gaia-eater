@@ -43,8 +43,9 @@ pub struct StructureAsset {
 }
 
 fn load_assets(asset_server: Res<AssetServer>, mut assets_loading: ResMut<AssetsLoading>) {
-    let mut handles = asset_server.load_folder("biomes").unwrap();
-    assets_loading.0.append(&mut handles);
+    assets_loading
+        .0
+        .append(&mut asset_server.load_folder("biomes").unwrap());
     assets_loading
         .0
         .append(&mut asset_server.load_folder("structures").unwrap());
