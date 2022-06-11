@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use strum::{AsRefStr, EnumString, EnumDiscriminants, EnumIter};
+use strum::{AsRefStr, EnumDiscriminants, EnumIter, EnumString};
 
 pub const TILE_SIZE: f32 = 48.0;
 pub const PIECE_SIZE: f32 = TILE_SIZE / 2.0;

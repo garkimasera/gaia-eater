@@ -1,5 +1,5 @@
 use crate::action::CursorAction;
-use crate::defs::{Biome, TILE_SIZE, StructureKind};
+use crate::defs::{Biome, StructureKind, TILE_SIZE};
 use crate::planet::Planet;
 use bevy::math::{Rect, Vec3Swizzles};
 use bevy::prelude::*;
