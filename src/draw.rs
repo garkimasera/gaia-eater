@@ -170,70 +170,71 @@ fn spawn_structure_textures(
     for p in RectIter::new(in_screen_tile_range.from, in_screen_tile_range.to) {
         let structure = &planet.map[p].structure;
 
-        match structure {
-            Structure::None | Structure::Occupied => (),
-            Structure::Branch => {
-                for (corner, corner_piece_grid) in CORNERS.into_iter().zip(CORNER_PIECE_GRID) {
-                    let corner_index = corner_idx(
-                        |pos| {
-                            if planet.map.in_range(pos) {
-                                matches!(planet.map[pos].structure, Structure::Branch)
-                            } else {
-                                false
-                            }
-                        },
-                        p,
-                        corner,
-                    );
+        if !matches!(structure, Structure::None) {
+            for (corner, corner_piece_grid) in CORNERS.into_iter().zip(CORNER_PIECE_GRID) {
+                let corner_index = corner_idx(
+                    |pos| {
+                        if planet.map.in_range(pos) {
+                            !matches!(planet.map[pos].structure, Structure::None)
+                        } else {
+                            false
+                        }
+                    },
+                    p,
+                    corner,
+                );
 
-                    let grid_x = (corner_index % 3) * 2 + corner_piece_grid.0;
-                    let grid_y = (corner_index / 3) * 2 + corner_piece_grid.1;
+                let grid_x = (corner_index % 3) * 2 + corner_piece_grid.0;
+                let grid_y = (corner_index / 3) * 2 + corner_piece_grid.1;
 
-                    let index = grid_x + grid_y * 6;
+                let index = grid_x + grid_y * 6;
 
-                    let sprite = TextureAtlasSprite { index, ..default() };
+                let sprite = TextureAtlasSprite { index, ..default() };
 
-                    let x = p.0 as f32 * TILE_SIZE
-                        + PIECE_SIZE * ((corner.0 + 1) / 2) as f32
-                        + PIECE_SIZE / 2.0;
-                    let y = p.1 as f32 * TILE_SIZE
-                        + PIECE_SIZE * ((corner.1 + 1) / 2) as f32
-                        + PIECE_SIZE / 2.0;
+                let x = p.0 as f32 * TILE_SIZE
+                    + PIECE_SIZE * ((corner.0 + 1) / 2) as f32
+                    + PIECE_SIZE / 2.0;
+                let y = p.1 as f32 * TILE_SIZE
+                    + PIECE_SIZE * ((corner.1 + 1) / 2) as f32
+                    + PIECE_SIZE / 2.0;
 
-                    let asset = &assets.structures[&StructureKind::Branch];
+                let asset = &assets.structures[&StructureKind::Branch];
 
-                    let id = commands
-                        .spawn_bundle(SpriteSheetBundle {
-                            texture_atlas: asset.texture_atlas.clone(),
-                            sprite,
-                            transform: Transform::from_xyz(x, y, 300.0),
-                            visibility: Visibility { is_visible: true },
-                            ..default()
-                        })
-                        .id();
-                    tex_entities.push(id);
-                }
-            }
-            s => {
-                let kind: StructureKind = s.into();
-                let asset = &assets.structures[&kind];
-                let sprite = TextureAtlasSprite {
-                    index: 0,
-                    ..default()
-                };
-                let x = p.0 as f32 * TILE_SIZE + asset.attrs.width as f32 / 2.0;
-                let y = p.1 as f32 * TILE_SIZE + asset.attrs.height as f32 / 2.0;
                 let id = commands
                     .spawn_bundle(SpriteSheetBundle {
                         texture_atlas: asset.texture_atlas.clone(),
                         sprite,
-                        transform: Transform::from_xyz(x, y, 200.0),
+                        transform: Transform::from_xyz(x, y, 100.0),
                         visibility: Visibility { is_visible: true },
                         ..default()
                     })
                     .id();
                 tex_entities.push(id);
             }
+        }
+
+        if !matches!(
+            structure,
+            Structure::None | Structure::Occupied | Structure::Branch
+        ) {
+            let kind: StructureKind = structure.into();
+            let asset = &assets.structures[&kind];
+            let sprite = TextureAtlasSprite {
+                index: 0,
+                ..default()
+            };
+            let x = p.0 as f32 * TILE_SIZE + asset.attrs.width as f32 / 2.0;
+            let y = p.1 as f32 * TILE_SIZE + asset.attrs.height as f32 / 2.0;
+            let id = commands
+                .spawn_bundle(SpriteSheetBundle {
+                    texture_atlas: asset.texture_atlas.clone(),
+                    sprite,
+                    transform: Transform::from_xyz(x, y, 200.0),
+                    visibility: Visibility { is_visible: true },
+                    ..default()
+                })
+                .id();
+            tex_entities.push(id);
         }
     }
 }
