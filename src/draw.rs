@@ -171,7 +171,7 @@ fn spawn_structure_textures(
         let structure = &planet.map[p].structure;
 
         match structure {
-            Structure::None => (),
+            Structure::None | Structure::Occupied => (),
             Structure::Branch => {
                 for (corner, corner_piece_grid) in CORNERS.into_iter().zip(CORNER_PIECE_GRID) {
                     let corner_index = corner_idx(
@@ -200,7 +200,6 @@ fn spawn_structure_textures(
                         + PIECE_SIZE * ((corner.1 + 1) / 2) as f32
                         + PIECE_SIZE / 2.0;
 
-                    // let asset = &assets.biomes[&Biome::Desert];
                     let asset = &assets.structures[&StructureKind::Branch];
 
                     let id = commands
@@ -215,7 +214,26 @@ fn spawn_structure_textures(
                     tex_entities.push(id);
                 }
             }
-            _ => todo!(),
+            s => {
+                let kind: StructureKind = s.into();
+                let asset = &assets.structures[&kind];
+                let sprite = TextureAtlasSprite {
+                    index: 0,
+                    ..default()
+                };
+                let x = p.0 as f32 * TILE_SIZE + asset.attrs.width as f32 / 2.0;
+                let y = p.1 as f32 * TILE_SIZE + asset.attrs.height as f32 / 2.0;
+                let id = commands
+                    .spawn_bundle(SpriteSheetBundle {
+                        texture_atlas: asset.texture_atlas.clone(),
+                        sprite,
+                        transform: Transform::from_xyz(x, y, 200.0),
+                        visibility: Visibility { is_visible: true },
+                        ..default()
+                    })
+                    .id();
+                tex_entities.push(id);
+            }
         }
     }
 }

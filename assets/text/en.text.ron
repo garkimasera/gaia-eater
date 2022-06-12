@@ -10,4 +10,7 @@
     
     // Structures
     "branch": "Branch",
+    
+    // Messages
+    "welcome_to": "Welcome to {$app_name} !",
 }

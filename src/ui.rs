@@ -312,9 +312,9 @@ fn edit_map_window(
     let rect = egui::Window::new("Map editing tools")
         .vscroll(true)
         .show(egui_ctx.ctx_mut(), |ui| {
-            ui.add(egui::Slider::new(&mut *new_w, 1..=100).text("width"));
+            ui.add(egui::Slider::new(&mut *new_w, 2..=100).text("width"));
             ui.horizontal(|ui| {
-                ui.add(egui::Slider::new(&mut *new_h, 1..=100).text("height"));
+                ui.add(egui::Slider::new(&mut *new_h, 2..=100).text("height"));
                 if ui.button("New").clicked() {
                     ew_manage_planet.send(ManagePlanet::New(*new_w, *new_h));
                 }

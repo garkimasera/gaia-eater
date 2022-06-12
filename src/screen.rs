@@ -98,7 +98,9 @@ fn mouse_event(
 
     // Check covered by ui or not
     if !occupied_screen_space.check(window.width(), window.height(), pos) {
-        if mouse_button_input.just_pressed(MouseButton::Left) {
+        if mouse_button_input.just_pressed(MouseButton::Left)
+            && !matches!(*cursor_mode, CursorMode::EditBiome(_))
+        {
             *cursor_mode = CursorMode::Normal;
         }
         return;

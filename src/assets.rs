@@ -4,7 +4,6 @@ use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
 use fnv::FnvHashMap;
 use serde::Deserialize;
-use strum::IntoEnumIterator;
 
 #[derive(Clone, Copy, Debug)]
 pub struct AssetsPlugin;
@@ -14,6 +13,9 @@ impl Plugin for AssetsPlugin {
         app.add_plugin(bevy_asset_ron::RonAssetPlugin::<BiomeAssetList>::new(&[
             "biomes.ron",
         ]))
+        .add_plugin(bevy_asset_ron::RonAssetPlugin::<StructureAssetList>::new(
+            &["structures.ron"],
+        ))
         .init_resource::<AssetsLoading>()
         .add_startup_system(load_assets)
         .add_system(create_assets_list);
@@ -28,6 +30,11 @@ struct AssetsLoading(Vec<HandleUntyped>);
 #[uuid = "99d5021f-98fb-4873-b16a-bd9619b8b074"]
 pub struct BiomeAssetList(FnvHashMap<Biome, BiomeAttrs>);
 
+#[derive(Clone, Debug, Deserialize, TypeUuid)]
+#[serde(transparent)]
+#[uuid = "801a2daa-956d-469a-8e83-3610fbca21fd"]
+pub struct StructureAssetList(FnvHashMap<StructureKind, StructureAttrs>);
+
 pub struct AssetsLoaded {
     pub biomes: FnvHashMap<Biome, BiomeAsset>,
     pub structures: FnvHashMap<StructureKind, StructureAsset>,
@@ -39,6 +46,7 @@ pub struct BiomeAsset {
 }
 
 pub struct StructureAsset {
+    pub attrs: StructureAttrs,
     pub texture_atlas: Handle<TextureAtlas>,
 }
 
@@ -56,6 +64,7 @@ fn create_assets_list(
     asset_server: Res<AssetServer>,
     loading: Option<Res<AssetsLoading>>,
     biomes: Res<Assets<BiomeAssetList>>,
+    structures: Res<Assets<StructureAssetList>>,
     images: Res<Assets<Image>>,
     mut texture_atlas_assets: ResMut<Assets<TextureAtlas>>,
 ) {
@@ -98,15 +107,33 @@ fn create_assets_list(
         })
         .collect();
 
-    let structures = StructureKind::iter()
-        .map(|kind| {
-            let image =
-                images.get_handle(&format!("structures/{}.png", AsRef::<str>::as_ref(&kind)));
-            let texture_atlas =
-                TextureAtlas::from_grid(image, Vec2::new(PIECE_SIZE, PIECE_SIZE), 6, 4);
+    let structures = structures
+        .iter()
+        .next()
+        .expect("structures not found")
+        .1
+         .0
+        .iter()
+        .map(|(structure, attrs)| {
+            let image = images.get_handle(&format!(
+                "structures/{}.png",
+                AsRef::<str>::as_ref(structure)
+            ));
+            let texture_atlas = TextureAtlas::from_grid(
+                image,
+                Vec2::new(attrs.width as _, attrs.height as _),
+                attrs.columns,
+                attrs.rows,
+            );
             let texture_atlas = texture_atlas_assets.add(texture_atlas);
 
-            (kind, StructureAsset { texture_atlas })
+            (
+                *structure,
+                StructureAsset {
+                    attrs: attrs.clone(),
+                    texture_atlas,
+                },
+            )
         })
         .collect();
 

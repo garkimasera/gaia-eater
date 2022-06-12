@@ -1,5 +1,5 @@
 use crate::defs::*;
-use geom::Array2d;
+use geom::{Array2d, Coords};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -38,10 +38,45 @@ impl Planet {
     pub fn new(w: u32, h: u32) -> Planet {
         let map = Array2d::new(w, h, Tile::default());
 
-        Planet {
+        let mut planet = Planet {
             tick: 0,
             player: Player::default(),
             map,
+        };
+
+        planet.place(
+            (w / 2 - 1, h / 2 - 1).into(),
+            StructureSize::Middle,
+            Structure::Core,
+        );
+
+        planet
+    }
+
+    pub fn placeable(&self, p: Coords, size: StructureSize) -> bool {
+        if !self.map.in_range(p) {
+            return false;
+        }
+
+        for p in size.occupied_tiles().into_iter() {
+            if let Some(tile) = self.map.get(p) {
+                if !matches!(tile.structure, Structure::None) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        true
+    }
+
+    pub fn place(&mut self, p: Coords, size: StructureSize, structure: Structure) {
+        assert!(self.placeable(p, size));
+
+        self.map[p].structure = structure;
+
+        for p in size.occupied_tiles().into_iter() {
+            self.map[p].structure = Structure::Occupied;
         }
     }
 }

@@ -1,0 +1,15 @@
+{
+    branch: (
+        width: 24,
+        height: 24,
+        columns: 6,
+        rows: 4,
+    ),
+    core: (
+        size: middle,
+        width: 96,
+        height: 144,
+        columns: 1,
+        rows: 1,
+    ),
+}
