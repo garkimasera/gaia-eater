@@ -183,17 +183,8 @@ fn sidebar(ui: &mut egui::Ui, cursor_mode: &CursorMode, planet: &Planet, hover_t
 
     ui.separator();
 
-    let s = if let Some(coords) = hover_tile.0 {
-        format!("[{}, {}]", coords.0, coords.1)
-    } else {
-        "-".into()
-    };
-    ui.label(format!("{}: {}", t!("coordinates"), s));
-
-    ui.separator();
-
+    // Information about selected tool
     ui.label(t!("selected-tool"));
-
     match cursor_mode {
         CursorMode::Normal => {
             ui.label(t!("none"));
@@ -208,6 +199,16 @@ fn sidebar(ui: &mut egui::Ui, cursor_mode: &CursorMode, planet: &Planet, hover_t
             ui.label(format!("biome editing: {}", biome.as_ref()));
         }
     }
+
+    ui.separator();
+
+    // Information about the hovered tile
+    if let Some(coords) = hover_tile.0 {
+        ui.label(format!("{}: [{}, {}]", t!("coordinates"), coords.0, coords.1));
+    } else {
+        ui.label("-");
+    };
+
 }
 
 fn toolbar(
