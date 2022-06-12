@@ -88,7 +88,7 @@ pub enum LandFeature {
 #[strum_discriminants(strum(serialize_all = "kebab-case"))]
 pub enum Structure {
     None,
-    Occupied,
+    Occupied { by: Coords },
     Branch,
     Core,
     GathererDroneHub,

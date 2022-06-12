@@ -215,7 +215,7 @@ fn spawn_structure_textures(
 
         if !matches!(
             structure,
-            Structure::None | Structure::Occupied | Structure::Branch
+            Structure::None | Structure::Occupied { .. } | Structure::Branch
         ) {
             let kind: StructureKind = structure.into();
             let asset = &assets.structures[&kind];

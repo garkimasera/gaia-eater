@@ -9,11 +9,11 @@ use bevy_egui::{
 };
 use std::collections::{HashMap, VecDeque};
 
+use crate::{defs::StructureKind, planet::Planet};
 use crate::{
-    defs::Biome,
+    defs::{Biome, Structure},
     screen::{CursorMode, HoverTile, OccupiedScreenSpace},
 };
-use crate::{defs::StructureKind, planet::Planet};
 use crate::{msg::MsgKind, sim::ManagePlanet};
 
 #[derive(Clone, Copy, Debug)]
@@ -61,9 +61,9 @@ impl Plugin for UiPlugin {
             .init_resource::<UiTextures>()
             .add_system(load_textures)
             .add_system(panels.label("ui_panels").before("ui_windows"))
+            .add_system(msg_window.label("ui_windows"))
             .add_system(build_window.label("ui_windows"))
             .add_system(edit_map_window.label("ui_windows"))
-            .add_system(msg_window.label("ui_windows"))
             .add_system(exit_on_esc_system);
     }
 }
@@ -203,12 +203,24 @@ fn sidebar(ui: &mut egui::Ui, cursor_mode: &CursorMode, planet: &Planet, hover_t
     ui.separator();
 
     // Information about the hovered tile
-    if let Some(coords) = hover_tile.0 {
-        ui.label(format!("{}: [{}, {}]", t!("coordinates"), coords.0, coords.1));
-    } else {
-        ui.label("-");
-    };
+    if let Some(p) = hover_tile.0 {
+        ui.label(format!("{}: [{}, {}]", t!("coordinates"), p.0, p.1));
+        let tile = &planet.map[p];
 
+        let s = match &tile.structure {
+            Structure::None => None,
+            Structure::Occupied { by } => {
+                Some(crate::info::structure_info(&planet.map[*by].structure))
+            }
+            other => Some(crate::info::structure_info(other)),
+        };
+
+        if let Some(s) = s {
+            ui.label(s);
+        }
+    } else {
+        ui.label(format!("{}: -", t!("coordinates")));
+    };
 }
 
 fn toolbar(

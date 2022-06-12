@@ -13,6 +13,7 @@ mod action;
 mod assets;
 mod defs;
 mod draw;
+mod info;
 mod planet;
 mod screen;
 mod sim;

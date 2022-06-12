@@ -75,8 +75,8 @@ impl Planet {
 
         self.map[p].structure = structure;
 
-        for p in size.occupied_tiles().into_iter() {
-            self.map[p].structure = Structure::Occupied;
+        for p_rel in size.occupied_tiles().into_iter() {
+            self.map[p + p_rel].structure = Structure::Occupied { by: p };
         }
     }
 }
