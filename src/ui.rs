@@ -7,14 +7,14 @@ use bevy_egui::{
     egui::{self, FontData, FontDefinitions, FontFamily},
     EguiContext, EguiPlugin, EguiSettings,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
-use crate::sim::ManagePlanet;
 use crate::{
     defs::Biome,
     screen::{CursorMode, HoverTile, OccupiedScreenSpace},
 };
 use crate::{defs::StructureKind, planet::Planet};
+use crate::{msg::MsgKind, sim::ManagePlanet};
 
 #[derive(Clone, Copy, Debug)]
 pub struct UiPlugin {
@@ -31,6 +31,17 @@ pub struct WindowsOpenState {
 pub struct UiConf {
     pub scale_factor: f32,
     pub font_scale: f32,
+    pub max_message: usize,
+}
+
+impl Default for UiConf {
+    fn default() -> Self {
+        Self {
+            scale_factor: 1.0,
+            font_scale: 1.4,
+            max_message: 20,
+        }
+    }
 }
 
 #[derive(Clone, Default)]
@@ -46,15 +57,13 @@ impl Plugin for UiPlugin {
                 edit_map: self.edit_map,
                 ..default()
             })
-            .insert_resource(UiConf {
-                scale_factor: 1.0,
-                font_scale: 1.5,
-            })
+            .init_resource::<UiConf>()
             .init_resource::<UiTextures>()
             .add_system(load_textures)
-            .add_system(panels.label("ui_panels"))
-            .add_system(build_window.label("ui_windows").after("ui_panels"))
-            .add_system(edit_map_window.label("ui_windows").after("ui_panels"))
+            .add_system(panels.label("ui_panels").before("ui_windows"))
+            .add_system(build_window.label("ui_windows"))
+            .add_system(edit_map_window.label("ui_windows"))
+            .add_system(msg_window.label("ui_windows"))
             .add_system(exit_on_esc_system);
     }
 }
@@ -146,15 +155,7 @@ fn panels(
     occupied_screen_space.occupied_left = egui::SidePanel::left("left_panel")
         .resizable(true)
         .show(egui_ctx.ctx_mut(), |ui| {
-            ui.label(&format!("{}: {}", t!("energy"), planet.player.energy));
-            ui.label(&format!("{}: {}", t!("material"), planet.player.material));
-
-            let s = if let Some(coords) = hover_tile.get_single().unwrap().0 {
-                format!("[{}, {}]", coords.0, coords.1)
-            } else {
-                "-".into()
-            };
-            ui.label(format!("{}: {}", t!("coordinates"), s));
+            sidebar(ui, &cursor_mode, &planet, hover_tile.get_single().unwrap());
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
         .response
@@ -174,6 +175,39 @@ fn panels(
         .rect
         .height()
         * conf.scale_factor;
+}
+
+fn sidebar(ui: &mut egui::Ui, cursor_mode: &CursorMode, planet: &Planet, hover_tile: &HoverTile) {
+    ui.label(&format!("{}: {}", t!("energy"), planet.player.energy));
+    ui.label(&format!("{}: {}", t!("material"), planet.player.material));
+
+    ui.separator();
+
+    let s = if let Some(coords) = hover_tile.0 {
+        format!("[{}, {}]", coords.0, coords.1)
+    } else {
+        "-".into()
+    };
+    ui.label(format!("{}: {}", t!("coordinates"), s));
+
+    ui.separator();
+
+    ui.label(t!("selected-tool"));
+
+    match cursor_mode {
+        CursorMode::Normal => {
+            ui.label(t!("none"));
+        }
+        CursorMode::Build(kind) => match kind {
+            StructureKind::Branch => {
+                ui.label(t!("branch"));
+            }
+            _ => unreachable!(),
+        },
+        CursorMode::EditBiome(biome) => {
+            ui.label(format!("biome editing: {}", biome.as_ref()));
+        }
+    }
 }
 
 fn toolbar(
@@ -222,6 +256,35 @@ fn build_window(
         .vscroll(true)
         .show(egui_ctx.ctx_mut(), |ui| {
             ui.label("工事中");
+        })
+        .unwrap()
+        .response
+        .rect;
+    occupied_screen_space
+        .window_rects
+        .push(convert_rect(rect, conf.scale_factor));
+}
+
+fn msg_window(
+    mut egui_ctx: ResMut<EguiContext>,
+    mut msgs: Local<VecDeque<(MsgKind, String)>>,
+    mut occupied_screen_space: ResMut<OccupiedScreenSpace>,
+    conf: Res<UiConf>,
+) {
+    while let Some(msg) = crate::msg::pop_msg() {
+        msgs.push_front(msg);
+        if msgs.len() > conf.max_message {
+            msgs.pop_back();
+        }
+    }
+
+    let rect = egui::Window::new(t!("messages"))
+        .vscroll(true)
+        .show(egui_ctx.ctx_mut(), |ui| {
+            for (_kind, msg) in msgs.iter() {
+                ui.label(msg);
+                ui.separator();
+            }
         })
         .unwrap()
         .response

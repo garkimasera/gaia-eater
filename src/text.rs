@@ -2,9 +2,25 @@ use bevy::asset::LoadState;
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
 use once_cell::sync::Lazy;
+use regex::{Captures, Regex};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::RwLock;
+
+macro_rules! t {
+    ($s:expr) => {
+        $crate::text::get_text($s, std::collections::HashMap::default())
+    };
+    ($s:expr; $($name:ident = $value:expr),*) => {{
+        let mut map = std::collections::HashMap::default();
+
+        $(
+            map.insert(stringify!($name).into(), $value.to_string());
+        )*
+
+        $crate::text::get_text($s, map)
+    }};
+}
 
 static TRANSLATION_TEXTS: Lazy<RwLock<HashMap<String, TranslationText>>> =
     Lazy::new(|| RwLock::new(HashMap::default()));
@@ -39,6 +55,7 @@ fn load_text(asset_server: Res<AssetServer>, mut text_loading: ResMut<TextLoadin
 }
 
 fn update_text(
+    mut command: Commands,
     asset_server: Res<AssetServer>,
     loading: Option<Res<TextLoading>>,
     texts: Res<Assets<TranslationText>>,
@@ -79,6 +96,13 @@ fn update_text(
         .collect::<HashMap<String, TranslationText>>();
 
     *TRANSLATION_TEXTS.write().unwrap() = texts;
+
+    crate::msg::push_msg(
+        crate::msg::MsgKind::Notice,
+        t!("welcome_to"; app_name=crate::APP_NAME),
+    );
+
+    command.remove_resource::<TextLoading>();
 }
 
 fn lang_code() -> String {
@@ -90,17 +114,25 @@ fn lang_code() -> String {
     "en".into()
 }
 
-pub fn get_text(s: &str) -> String {
+pub fn get_text(s: &str, map: HashMap<String, String>) -> String {
     if let Some(translation_text) = TRANSLATION_TEXTS.read().unwrap().get(&*LANG_CODE) {
         if let Some(text) = translation_text.0.get(s) {
-            return text.into();
+            if map.is_empty() {
+                return text.into();
+            } else {
+                return replace(text, map);
+            }
         }
     }
     s.into()
 }
 
-macro_rules! t {
-    ($s:expr) => {
-        $crate::text::get_text($s)
-    };
+pub fn replace(s: &str, map: HashMap<String, String>) -> String {
+    static RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\{\$([a-zA-Z][a-zA-Z0-9_-]*)\}").unwrap());
+
+    RE.replace_all(s, |caps: &Captures| {
+        let name = caps.get(1).unwrap().as_str();
+        map[name].to_string()
+    })
+    .into_owned()
 }

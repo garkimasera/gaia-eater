@@ -81,6 +81,7 @@ fn mouse_event(
     camera_query: Query<(&OrthographicProjection, &Transform)>,
     occupied_screen_space: Res<OccupiedScreenSpace>,
     hover_tile: Query<(&HoverTile, &Transform), Without<OrthographicProjection>>,
+    mut cursor_mode: ResMut<CursorMode>,
     mut prev_tile_coords: Local<Option<Coords>>,
 ) {
     let window = windows.get_primary().unwrap();
@@ -90,7 +91,16 @@ fn mouse_event(
         return;
     };
 
+    // Clear current selected tool
+    if mouse_button_input.just_pressed(MouseButton::Right) {
+        *cursor_mode = CursorMode::Normal;
+    }
+
+    // Check covered by ui or not
     if !occupied_screen_space.check(window.width(), window.height(), pos) {
+        if mouse_button_input.just_pressed(MouseButton::Left) {
+            *cursor_mode = CursorMode::Normal;
+        }
         return;
     }
 

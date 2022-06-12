@@ -6,6 +6,8 @@ use clap::Parser;
 
 #[macro_use]
 mod text;
+#[macro_use]
+mod msg;
 
 mod action;
 mod assets;
@@ -17,6 +19,8 @@ mod sim;
 mod ui;
 
 use bevy::{prelude::*, window::PresentMode, winit::WinitSettings};
+
+const APP_NAME: &str = concat!("Gaia Eater ", env!("CARGO_PKG_VERSION"));
 
 #[derive(Clone, Parser, Debug)]
 #[clap(author, version)]
@@ -31,6 +35,11 @@ fn main() {
 
     App::new()
         .insert_resource(DefaultTaskPoolOptions::with_num_threads(2))
+        .insert_resource(WindowDescriptor {
+            title: APP_NAME.into(),
+            present_mode: PresentMode::Mailbox,
+            ..Default::default()
+        })
         .add_plugins(DefaultPlugins)
         .add_plugin(text::TextPlugin)
         .add_plugin(assets::AssetsPlugin)
@@ -43,10 +52,6 @@ fn main() {
         .add_plugin(action::ActionPlugin)
         .add_plugin(sim::SimPlugin)
         .insert_resource(WinitSettings::game())
-        .insert_resource(WindowDescriptor {
-            present_mode: PresentMode::Mailbox,
-            ..Default::default()
-        })
         .run();
 }
 

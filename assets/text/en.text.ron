@@ -4,6 +4,9 @@
     "coordinates": "Coordinates",
     "energy": "Energy",
     "material": "Material",
+    "messages": "Messages",
+    "none": "None",
+    "selected-tool": "Selected tool",
     
     // Structures
     "branch": "Branch",
