@@ -1,5 +1,6 @@
 use crate::action::CursorAction;
-use crate::defs::{Biome, StructureKind, TILE_SIZE};
+use crate::assets::AssetsLoaded;
+use crate::defs::{Biome, StructureKind, StructureSize, TILE_SIZE};
 use crate::planet::Planet;
 use bevy::math::{Rect, Vec3Swizzles};
 use bevy::prelude::*;
@@ -190,6 +191,7 @@ fn centering(
 }
 
 fn update_hover_tile(
+    mut commands: Commands,
     windows: Res<Windows>,
     planet: Res<Planet>,
     mut hover_tile: Query<
@@ -197,6 +199,10 @@ fn update_hover_tile(
         Without<OrthographicProjection>,
     >,
     camera_query: Query<(&OrthographicProjection, &Transform)>,
+    cursor_mode: Res<CursorMode>,
+    asset_server: Res<AssetServer>,
+    assets: Option<Res<AssetsLoaded>>,
+    mut color_entities: Local<Vec<Entity>>,
 ) {
     let mut hover_tile = hover_tile.get_single_mut().unwrap();
     let window = windows.get_primary().unwrap();
@@ -213,7 +219,7 @@ fn update_hover_tile(
     let tile_i = (p.x / TILE_SIZE) as i32;
     let tile_j = (p.y / TILE_SIZE) as i32;
 
-    if tile_i >= 0
+    let is_visible = if tile_i >= 0
         && tile_i < planet.map.size().0 as i32
         && tile_j >= 0
         && tile_j < planet.map.size().1 as i32
@@ -223,12 +229,56 @@ fn update_hover_tile(
         hover_tile.0 .0 = Some(Coords(tile_i, tile_j));
         hover_tile.1.translation.x = tile_i as f32 * TILE_SIZE + TILE_SIZE / 2.0;
         hover_tile.1.translation.y = tile_j as f32 * TILE_SIZE + TILE_SIZE / 2.0;
-        hover_tile.1.translation.z = 900.0;
-        *hover_tile.2 = Visibility { is_visible: true };
+        hover_tile.1.translation.z = 950.0;
+        true
     } else {
         hover_tile.0 .0 = None;
-        *hover_tile.2 = Visibility { is_visible: false };
+        false
     };
+    *hover_tile.2 = Visibility { is_visible };
+
+    for entity in color_entities.iter() {
+        commands.entity(*entity).despawn();
+    }
+    color_entities.clear();
+
+    if !is_visible {
+        return;
+    }
+
+    let assets = if let Some(assets) = &assets {
+        assets
+    } else {
+        return;
+    };
+
+    let size = match &*cursor_mode {
+        CursorMode::Build(kind) => assets.structures[kind].attrs.size,
+        CursorMode::EditBiome(_) => StructureSize::Small,
+        _ => {
+            return;
+        }
+    };
+
+    for p in [Coords(tile_i, tile_j)]
+        .into_iter()
+        .chain(size.occupied_tiles().iter().map(|p| *p + (tile_i, tile_j)))
+    {
+        let mut transform = Transform { ..default() };
+        transform.translation.x = p.0 as f32 * TILE_SIZE + TILE_SIZE / 2.0;
+        transform.translation.y = p.1 as f32 * TILE_SIZE + TILE_SIZE / 2.0;
+        transform.translation.z = 920.0;
+
+        let id = commands
+            .spawn_bundle(SpriteBundle {
+                texture: asset_server.load("ui/tile-colored.png"),
+                visibility: Visibility { is_visible: true },
+                transform,
+                ..default()
+            })
+            .id();
+        color_entities.push(id);
+    }
 }
 
 #[derive(Clone, Default, Debug)]
